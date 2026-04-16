@@ -1,56 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Khang AI Studio - Pro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khang AI Studio Pro</title>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
-        input { padding: 10px; width: 300px; border-radius: 5px; border: none; }
-        button { padding: 10px 20px; background: #38bdf8; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #status { margin: 20px; color: #818cf8; }
-        video { margin-top: 20px; width: 80%; max-width: 600px; border-radius: 10px; display: none; }
+        :root { --primary: #00d2ff; --bg: #050505; --card: #111; }
+        body { background-color: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { max-width: 700px; width: 100%; background: var(--card); padding: 40px; border-radius: 30px; border: 1px solid #222; box-shadow: 0 0 50px rgba(0,210,255,0.1); margin-top: 50px; }
+        h1 { font-size: 2.5rem; letter-spacing: -1px; background: linear-gradient(to right, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; text-align: center; }
+        textarea { width: 100%; padding: 20px; border-radius: 15px; border: 1px solid #333; background: #000; color: white; margin: 20px 0; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
+        textarea:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(0,210,255,0.2); }
+        button { width: 100%; padding: 18px; border-radius: 15px; border: none; background: linear-gradient(to right, #00d2ff, #3a7bd5); color: white; font-weight: bold; cursor: pointer; font-size: 18px; transition: 0.3s; }
+        button:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,210,255,0.3); }
+        button:disabled { background: #333; cursor: not-allowed; transform: none; box-shadow: none; }
+        #status { margin-top: 25px; text-align: center; color: #888; font-size: 14px; line-height: 1.6; }
+        video { width: 100%; margin-top: 30px; border-radius: 20px; display: none; border: 1px solid #444; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .loader { display: none; border: 3px solid #333; border-top: 3px solid var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 15px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <h1>🚀 KHANG AI STUDIO PRO</h1>
-    <p>Tạo video không lo lỗi Gradio</p>
-    
-    <input type="text" id="promptInput" placeholder="Nhập ý tưởng (Tiếng Anh)...">
-    <button onclick="generateVideo()">Tạo Video</button>
-    
-    <div id="status"></div>
-    <video id="resultVideo" controls></video>
+
+    <div class="container">
+        <h1>KHANG AI STUDIO</h1>
+        <p style="text-align: center; color: #555; margin-bottom: 30px;">Hệ thống tạo video trí tuệ nhân tạo thế hệ mới</p>
+        
+        <textarea id="promptInput" rows="3" placeholder="Gõ ý tưởng bằng tiếng Việt... (VD: Con hổ mặc áo choàng đi trong tuyết)"></textarea>
+        <button id="genBtn" onclick="generateVideo()">BẮT ĐẦU TẠO VIDEO</button>
+        
+        <div class="loader" id="loader"></div>
+        <div id="status">Sẵn sàng thực hiện yêu cầu.</div>
+        
+        <video id="resultVideo" controls autoplay loop></video>
+    </div>
 
     <script>
+        const HF_TOKEN = "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"; 
+        const MODEL_URL = "https://api-inference.huggingface.co/models/ali-vilab/text-to-video-ms-1.5b";
+
         async function generateVideo() {
-            const prompt = document.getElementById('promptInput').value;
+            const promptInput = document.getElementById('promptInput');
+            const btn = document.getElementById('genBtn');
             const status = document.getElementById('status');
             const video = document.getElementById('resultVideo');
-            
-            if (!prompt) return alert("Hãy nhập gì đó nhé!");
+            const loader = document.getElementById('loader');
 
-            status.innerText = "⏳ AI đang suy nghĩ... (Có thể mất 1-2 phút)";
+            if (!promptInput.value.trim()) return alert("Khang ơi, bạn chưa nhập ý tưởng kìa!");
+
+            btn.disabled = true;
+            status.innerHTML = "⏳ <b>Đang dịch ngôn ngữ...</b>";
+            loader.style.display = "block";
             video.style.display = "none";
 
             try {
-                const response = await fetch(
-                    # Thay dòng cũ bằng dòng này
-client = InferenceClient("ali-vilab/text-to-video-ms-1.5b"),
-                    {
-                        headers: { Authorization: "Bearer hf_xxxx" }, // Bạn cần điền Token của bạn vào đây
-                        method: "POST",
-                        body: JSON.stringify({ inputs: prompt }),
-                    }
-                );
+                // Tự động dịch sang tiếng Anh bằng Google API miễn phí
+                const resTranslate = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(promptInput.value)}`);
+                const jsonTranslate = await resTranslate.json();
+                const englishPrompt = jsonTranslate[0][0][0];
+                
+                status.innerHTML = `🚀 <b>Đang gửi lệnh tới Server AI:</b><br>"${englishPrompt}"<br>(Quá trình này mất khoảng 30-60 giây)`;
+
+                const response = await fetch(MODEL_URL, {
+                    headers: { Authorization: `Bearer ${HF_TOKEN}` },
+                    method: "POST",
+                    body: JSON.stringify({ inputs: englishPrompt }),
+                });
+
+                if (!response.ok) {
+                    if (response.status === 503) throw new Error("Server AI đang khởi động hoặc quá tải. Hãy thử lại sau 30 giây!");
+                    throw new Error("Có lỗi xảy ra khi kết nối với Hugging Face.");
+                }
 
                 const blob = await response.blob();
+                if (blob.size < 1000) throw new Error("Server trả về file lỗi. Hãy thử nhấn lại!");
+
                 const videoUrl = URL.createObjectURL(blob);
-                
                 video.src = videoUrl;
                 video.style.display = "block";
-                status.innerText = "✅ Đã xong!";
+                status.innerHTML = "✨ <b>Thành công rực rỡ!</b> Video của bạn đã sẵn sàng.";
             } catch (error) {
-                status.innerText = "❌ Lỗi rồi, hãy thử lại nhé!";
-                console.error(error);
+                status.innerHTML = `<span style="color: #ff4d4d;">❌ ${error.message}</span>`;
+            } finally {
+                btn.disabled = false;
+                loader.style.display = "none";
             }
         }
     </script>

@@ -1,62 +1,57 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Khang AI Studio</title>
+    <title>Khang AI Studio - Pro</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #0f172a; /* Màu nền tối sang trọng */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .header {
-            padding: 30px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 2.5rem;
-            background: linear-gradient(90deg, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .studio-container {
-            width: 95%;
-            max-width: 1100px;
-            background: #1e293b;
-            padding: 10px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 50px;
-        }
-        iframe {
-            width: 100%;
-            height: 800px; /* Tăng chiều cao để không bị cuộn bên trong */
-            border: none;
-            border-radius: 15px;
-        }
+        body { background: #0f172a; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
+        input { padding: 10px; width: 300px; border-radius: 5px; border: none; }
+        button { padding: 10px 20px; background: #38bdf8; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #status { margin: 20px; color: #818cf8; }
+        video { margin-top: 20px; width: 80%; max-width: 600px; border-radius: 10px; display: none; }
     </style>
 </head>
 <body>
+    <h1>🚀 KHANG AI STUDIO PRO</h1>
+    <p>Tạo video không lo lỗi Gradio</p>
+    
+    <input type="text" id="promptInput" placeholder="Nhập ý tưởng (Tiếng Anh)...">
+    <button onclick="generateVideo()">Tạo Video</button>
+    
+    <div id="status"></div>
+    <video id="resultVideo" controls></video>
 
-    <div class="header">
-        <h1>✨ KHANG AI STUDIO ✨</h1>
-        <p>Sáng tạo Video bằng trí tuệ nhân tạo</p>
-    </div>
+    <script>
+        async function generateVideo() {
+            const prompt = document.getElementById('promptInput').value;
+            const status = document.getElementById('status');
+            const video = document.getElementById('resultVideo');
+            
+            if (!prompt) return alert("Hãy nhập gì đó nhé!");
 
-    <div class="studio-container">
-        <iframe
-            src="https://huggingface.co/spaces/sbiki/khang-ai-studio/embed"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-        ></iframe>
-    </div>
+            status.innerText = "⏳ AI đang suy nghĩ... (Có thể mất 1-2 phút)";
+            video.style.display = "none";
 
+            try {
+                const response = await fetch(
+                    "https://api-inference.huggingface.co/models/ByteDance/AnimateDiff-Lightning",
+                    {
+                        headers: { Authorization: "Bearer hf_xxxx" }, // Bạn cần điền Token của bạn vào đây
+                        method: "POST",
+                        body: JSON.stringify({ inputs: prompt }),
+                    }
+                );
+
+                const blob = await response.blob();
+                const videoUrl = URL.createObjectURL(blob);
+                
+                video.src = videoUrl;
+                video.style.display = "block";
+                status.innerText = "✅ Đã xong!";
+            } catch (error) {
+                status.innerText = "❌ Lỗi rồi, hãy thử lại nhé!";
+                console.error(error);
+            }
+        }
+    </script>
 </body>
 </html>
